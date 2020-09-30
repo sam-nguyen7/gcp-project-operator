@@ -328,6 +328,7 @@ func (r *ReferenceAdapter) EnsureFinalizerDeleted() error {
 
 // EnsureProjectCleanedUp deletes the project, the secret and the finalizer if they still exist
 func (r *ReferenceAdapter) EnsureProjectCleanedUp() error {
+	// if CCS then only delete the finalizer
 	if !r.isCCS() {
 		err := r.deleteProject()
 		if err != nil {
@@ -558,6 +559,9 @@ func (r *ReferenceAdapter) deleteCredentials() error {
 		r.logger.V(2).Info("Getting Secret")
 		key, err := gcputil.GetSecret(r.kubeClient, secret.Name, secret.Namespace)
 		if err != nil {
+			if r.isCCS() {
+				return nil
+			}
 			return operrors.Wrap(err, fmt.Sprintf("could not get the service account secret for %s", secret.Name))
 		}
 
